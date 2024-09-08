@@ -464,3 +464,10 @@ INSERT INTO like_res (user_id, res_id, date_like) VALUES
 (3, 9, '2024-09-06 18:00:00'),
 (1, 8, '2024-09-07 18:30:00'),
 (2, 7, '2024-09-07 19:00:00');
+
+-- query
+SELECT COUNT(*) FROM like_res
+LEFT JOIN users ON like_res.user_id = users.user_id
+
+SELECT * FROM users as u 
+LEFT JOIN like_res as lr on lr.user_id = u.user_id
