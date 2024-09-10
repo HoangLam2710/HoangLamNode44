@@ -245,10 +245,10 @@ ORDER BY num_likes DESC
 LIMIT 2
 
 -- Tìm người đã đặt hàng nhiều nhất.
-SELECT user_id, COUNT(user_id) AS num_order
+SELECT user_id, COUNT(user_id) AS num_orders
 FROM orders
 GROUP BY user_id
-ORDER BY num_order DESC
+ORDER BY num_orders DESC
 LIMIT 1
 
 -- Tìm người dùng không hoạt động trong hệ thống (không đặt hàng, không like, không đánh giá nhà hàng).
