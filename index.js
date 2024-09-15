@@ -1,18 +1,14 @@
 import express from "express";
+import rootRoutes from "./src/routers/root.router.js";
 
 const app = express();
 
 app.use(express.json());
 
+app.use(rootRoutes);
+
 app.get("/", (req, res) => {
   res.status(200).json("Hello World");
-});
-
-// demo params from url
-app.post("/users/:id", (req, res) => {
-  let { params, body } = req;
-  let { id } = params;
-  res.send({ id, ...body });
 });
 
 // demo get query from url
