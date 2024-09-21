@@ -1,9 +1,13 @@
 import express from "express";
+import cors from "cors";
 import rootRoutes from "./src/routers/root.router.js";
 
 const app = express();
 
 app.use(express.json());
+
+// Allow all origins
+app.use(cors());
 
 app.use(rootRoutes);
 
