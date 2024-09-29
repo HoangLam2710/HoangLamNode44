@@ -1,13 +1,14 @@
 import { Sequelize } from "sequelize";
+import configDb from "../config/connect_db.js";
 
 const sequelize = new Sequelize(
-  "node44_youtube", // database name
-  "root", // username
-  "123456", // password
+  configDb.database,
+  configDb.user,
+  configDb.pass,
   {
-    host: "localhost",
-    port: 3306,
-    dialect: "mysql",
+    host: configDb.host,
+    port: configDb.port,
+    dialect: configDb.dialect,
   },
 );
 
