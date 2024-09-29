@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { INTERNAL_SERVER, OK } from "../../const.js";
 import initModels from "../models/init-models.js";
 import sequelize from "../models/connect.js";
 import configDb from "../config/connect_db.js";
+import { transporter, createMailOptions } from "../config/transporter.js";
+import { createAccessToken } from "../config/jwt.js";
 
 const models = initModels(sequelize);
 
@@ -27,9 +28,20 @@ const register = async (req, res) => {
       pass_word: bcrypt.hashSync(pass, 10),
     });
 
-    return res
-      .status(201)
-      .json({ message: "Register succesfully", data: userNew });
+    // config info mail
+    const mailOptions = createMailOptions(email, fullName);
+    // send mail
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        return res
+          .status(INTERNAL_SERVER)
+          .json({ message: "Sending email error" });
+      } else {
+        return res
+          .status(201)
+          .json({ message: "Register succesfully", data: userNew });
+      }
+    });
   } catch (error) {
     return res.status(INTERNAL_SERVER).json({ message: "error" });
   }
@@ -51,15 +63,7 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Incorrect password" });
     }
 
-    // tạo token
-    // sign(params1, params2, params3)
-    // params1: tạo payload và lưu vào token
-    // params2: key để tạo token
-    // params3: setting timelife của token và thuật toán để tạo token
-    const accessToken = jwt.sign({ userId: user.user_id }, configDb.jwtSecret, {
-      algorithm: "HS256",
-      expiresIn: "1d",
-    });
+    const accessToken = createAccessToken(user.user_id);
 
     return res
       .status(OK)
@@ -69,4 +73,27 @@ const login = async (req, res) => {
   }
 };
 
-export { register, login };
+const loginWithFacebook = async (req, res) => {
+  try {
+    const { id, name, email } = req.body;
+    let user;
+    user = await models.users.findOne({
+      where: { face_app_id: id },
+    });
+    if (!user) {
+      user = await models.users.create({
+        face_app_id: id,
+        full_name: name,
+        email,
+      });
+    }
+    const accessToken = createAccessToken(user.user_id);
+    return res
+      .status(OK)
+      .json({ message: "Login succesfully", data: accessToken });
+  } catch (error) {
+    return res.status(INTERNAL_SERVER).json({ message: "error" });
+  }
+};
+
+export { register, login, loginWithFacebook };

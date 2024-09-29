@@ -10,4 +10,6 @@ export default {
   dialect: process.env.DB_DIALECT,
   port: process.env.DB_PORT,
   jwtSecret: process.env.JWT_SECRET,
+  nodemailer_email: process.env.NODEMAILER_EMAIL,
+  nodemailer_pass: process.env.NODEMAILER_PASS,
 };
