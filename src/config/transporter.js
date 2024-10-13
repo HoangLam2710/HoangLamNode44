@@ -20,4 +20,15 @@ const createMailOptions = (email, fullName) => {
   };
 };
 
-export { transporter, createMailOptions };
+const createMailForgotPassword = (email, randomCode) => {
+  return {
+    from: process.env.NODEMAILER_EMAIL,
+    to: email,
+    subject: "Code reset password",
+    // text: "System has received a request to reset the password of your account. If you are not the one who requested, please ignore this email. Otherwise, please use the following code to reset your password",
+    html: `<h1>${randomCode}</h1>`,
+    // just use text or html, not both
+  };
+};
+
+export { transporter, createMailOptions, createMailForgotPassword };

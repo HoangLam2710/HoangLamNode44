@@ -1,10 +1,11 @@
-import { INTERNAL_SERVER, OK } from "../../const.js";
-import initModels from "../models/init-models.js";
-import sequelize from "../models/connect.js";
-import { getListVideo } from "../controllers/video.controller.js";
 import { describe, it } from "mocha";
-import sinon from "sinon";
 import { expect } from "chai";
+import sinon from "sinon";
+
+import { OK } from "../../../const.js";
+import initModels from "../../models/init-models.js";
+import sequelize from "../../models/connect.js";
+import { getListVideo } from "../../controllers/video.controller.js";
 
 const models = initModels(sequelize);
 
@@ -43,5 +44,7 @@ describe("getListVideo", () => {
     await getListVideo(req, res);
 
     expect(res.status.calledWith(OK)).to.be.true;
+
+    expect(res.json.calledWith(videos)).to.be.true;
   });
 });

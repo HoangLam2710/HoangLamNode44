@@ -1,9 +1,14 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+
 import { BAD_REQUEST, INTERNAL_SERVER, OK, UNAUTHORIZED } from "../../const.js";
 import initModels from "../models/init-models.js";
 import sequelize from "../models/connect.js";
-import configDb from "../config/connect_db.js";
-import { transporter, createMailOptions } from "../config/transporter.js";
+import {
+  transporter,
+  createMailOptions,
+  createMailForgotPassword,
+} from "../config/transporter.js";
 import {
   createAccessToken,
   createAccessTokenAsyncKey,
@@ -189,4 +194,87 @@ const loginAsyncKey = async (req, res) => {
   }
 };
 
-export { register, login, loginWithFacebook, extendToken, loginAsyncKey };
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const checkEmail = await models.users.findOne({
+      where: { email },
+    });
+
+    if (!checkEmail) {
+      return res.status(BAD_REQUEST).json({ message: "Email not found" });
+    }
+
+    const randomCode = crypto.randomBytes(5).toString("hex");
+    const expired = new Date(Date.now() + 60 * 60 * 1000);
+
+    await models.code.create({
+      code: randomCode,
+      expired,
+    });
+
+    // config info mail
+    const mailOptions = createMailForgotPassword(email, randomCode);
+    // send mail
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        return res
+          .status(INTERNAL_SERVER)
+          .json({ message: "Sending email error" });
+      } else {
+        return res.status(201).json({ message: "Please check your email" });
+      }
+    });
+  } catch (error) {
+    return res.status(INTERNAL_SERVER).json({ message: "error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, code, newPass } = req.body;
+
+    const checkCode = await models.code.findOne({
+      where: { code },
+    });
+
+    if (!checkCode) {
+      return res.status(BAD_REQUEST).json({ message: "Code not found" });
+    }
+
+    if (checkCode.expired < new Date()) {
+      return res.status(BAD_REQUEST).json({ message: "Code expired" });
+    }
+
+    const checkEmail = await models.users.findOne({
+      where: { email },
+    });
+
+    if (!checkEmail) {
+      return res.status(BAD_REQUEST).json({ message: "User not found" });
+    }
+
+    const hashNewPass = bcrypt.hashSync(newPass, 10);
+    checkEmail.pass_word = hashNewPass;
+    checkEmail.save();
+
+    await models.code.destroy({
+      where: { code },
+    });
+
+    return res.status(OK).json({ message: "Reset password succesfully" });
+  } catch (error) {
+    return res.status(INTERNAL_SERVER).json({ message: "error" });
+  }
+};
+
+export {
+  register,
+  login,
+  loginWithFacebook,
+  extendToken,
+  loginAsyncKey,
+  forgotPassword,
+  resetPassword,
+};
