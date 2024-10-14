@@ -15,14 +15,21 @@ import {
   createRefreshToken,
   createRefreshTokenAsyncKey,
 } from "../config/jwt.js";
+import { PrismaClient } from "@prisma/client";
+import speakeasy from "speakeasy";
 
 const models = initModels(sequelize);
+
+const prisma = new PrismaClient();
 
 const register = async (req, res) => {
   try {
     const { fullName, email, pass } = req.body;
 
-    const userExist = await models.users.findOne({
+    // const userExist = await models.users.findOne({
+    //   where: { email },
+    // });
+    const userExist = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -32,26 +39,42 @@ const register = async (req, res) => {
         .json({ message: "User already exists", data: null });
     }
 
-    const userNew = await models.users.create({
-      full_name: fullName,
-      email,
-      pass_word: bcrypt.hashSync(pass, 10),
+    // const userNew = await models.users.create({
+    //   full_name: fullName,
+    //   email,
+    //   pass_word: bcrypt.hashSync(pass, 10),
+    // });
+
+    // create secret key for 2FA
+    const secretKey = speakeasy.generateSecret({ length: 15 });
+
+    const userNew = await prisma.users.create({
+      data: {
+        full_name: fullName,
+        email,
+        pass_word: bcrypt.hashSync(pass, 10),
+        secret: secretKey.base32,
+      },
     });
 
-    // config info mail
-    const mailOptions = createMailOptions(email, fullName);
-    // send mail
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        return res
-          .status(INTERNAL_SERVER)
-          .json({ message: "Sending email error" });
-      } else {
-        return res
-          .status(201)
-          .json({ message: "Register succesfully", data: userNew });
-      }
-    });
+    return res
+      .status(201)
+      .json({ message: "Register succesfully", data: userNew });
+
+    // // config info mail
+    // const mailOptions = createMailOptions(email, fullName);
+    // // send mail
+    // transporter.sendMail(mailOptions, (err, info) => {
+    //   if (err) {
+    //     return res
+    //       .status(INTERNAL_SERVER)
+    //       .json({ message: "Sending email error" });
+    //   } else {
+    //     return res
+    //       .status(201)
+    //       .json({ message: "Register succesfully", data: userNew });
+    //   }
+    // });
   } catch (error) {
     return res.status(INTERNAL_SERVER).json({ message: "error" });
   }
