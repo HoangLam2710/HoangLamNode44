@@ -176,7 +176,7 @@ const extendToken = async (req, res) => {
 
 const loginAsyncKey = async (req, res) => {
   try {
-    const { email, pass } = req.body;
+    const { email, pass, code } = req.body;
 
     const user = await models.users.findOne({
       where: { email },
@@ -188,6 +188,15 @@ const loginAsyncKey = async (req, res) => {
     const isMatch = bcrypt.compareSync(pass, user.pass_word);
     if (!isMatch) {
       return res.status(BAD_REQUEST).json({ message: "Incorrect password" });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.secret,
+      encoding: "base32",
+      token: code,
+    });
+    if (!verified) {
+      return res.status(BAD_REQUEST).json({ message: "Incorrect code" });
     }
 
     const accessToken = createAccessTokenAsyncKey({ userId: user.user_id });

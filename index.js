@@ -5,6 +5,8 @@ import rootRoutes from "./src/routers/root.router.js";
 
 const app = express();
 
+app.use(express.static("."));
+
 // Allow all origins
 app.use(
   cors({

@@ -1,5 +1,5 @@
 import pool from "../../db.js";
-import { INTERNAL_SERVER, OK } from "../../const.js";
+import { INTERNAL_SERVER, OK, NOT_FOUND, CREATED } from "../../const.js";
 import initModels from "../models/init-models.js";
 import sequelize from "../models/connect.js";
 import { Op } from "sequelize"; // operators: LIKE, AND, OR, IN
@@ -28,7 +28,7 @@ const createUser = async (req, res) => {
         pass_word,
       },
     });
-    return res.status(201).json(newUser);
+    return res.status(CREATED).json(newUser);
   } catch (error) {
     return res.status(INTERNAL_SERVER).json({ message: "error" });
   }
@@ -83,7 +83,7 @@ const deleteUser = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(NOT_FOUND).json({ message: "User not found" });
     }
 
     // user.destroy();
@@ -107,7 +107,7 @@ const updateUser = async (req, res) => {
     // cách 1:
     // const user = await models.users.findByPk(user_id);
     // if (!user) {
-    //   return res.status(404).json({ message: "User not found" });
+    //   return res.status(NOT_FOUND).json({ message: "User not found" });
     // }
 
     // await models.users.update(
@@ -122,7 +122,7 @@ const updateUser = async (req, res) => {
     //   where: { user_id },
     // });
     // if (!user) {
-    //   return res.status(404).json({ message: "User not found" });
+    //   return res.status(NOT_FOUND).json({ message: "User not found" });
     // }
     // user.full_name = full_name || user.full_name;
     // user.pass_word = pass_word || user.pass_word;
@@ -138,7 +138,7 @@ const updateUser = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(NOT_FOUND).json({ message: "User not found" });
     }
 
     await prisma.users.update({
@@ -157,4 +157,89 @@ const updateUser = async (req, res) => {
   }
 };
 
-export { createUser, getUsers, deleteUser, updateUser };
+const uploadAvatar = async (req, res) => {
+  try {
+    const file = req.file;
+    const { userId } = req.body;
+
+    // const user = await models.users.findByPk(userId);
+
+    // if (!user) {
+    //   return res.status(NOT_FOUND).json({ message: "User not found" });
+    // }
+
+    // user.avatar = file.filename;
+    // await user.save();
+
+    // prisma
+    const user = await prisma.users.findFirst({
+      where: {
+        user_id: Number(userId),
+      },
+    });
+
+    if (!user) {
+      return res.status(NOT_FOUND).json({ message: "User not found" });
+    }
+    const avatarPath = `/public/imgs/${file.filename}`;
+    await prisma.users.update({
+      where: {
+        user_id: Number(userId),
+      },
+      data: {
+        avatar: avatarPath,
+      },
+    });
+
+    return res
+      .status(OK)
+      .json({ message: "Upload avatar successfully!", data: avatarPath });
+  } catch (error) {
+    return res
+      .status(INTERNAL_SERVER)
+      .json({ message: "error api upload avatar" });
+  }
+};
+
+const uploadAvatarCloud = async (req, res) => {
+  try {
+    const file = req.file;
+    const { userId } = req.body;
+
+    const user = await prisma.users.findFirst({
+      where: {
+        user_id: Number(userId),
+      },
+    });
+
+    if (!user) {
+      return res.status(NOT_FOUND).json({ message: "User not found" });
+    }
+    const avatarPath = file.path;
+    await prisma.users.update({
+      where: {
+        user_id: Number(userId),
+      },
+      data: {
+        avatar: avatarPath,
+      },
+    });
+
+    return res
+      .status(OK)
+      .json({ message: "Upload avatar successfully!", data: avatarPath });
+  } catch (error) {
+    return res
+      .status(INTERNAL_SERVER)
+      .json({ message: "error api upload avatar" });
+  }
+};
+
+export {
+  createUser,
+  getUsers,
+  deleteUser,
+  updateUser,
+  uploadAvatar,
+  uploadAvatarCloud,
+};
