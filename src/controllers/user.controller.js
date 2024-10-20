@@ -39,27 +39,27 @@ const getUsers = async (req, res) => {
     // const [data] = await pool.query("SELECT * FROM users");
     const { full_name = "" } = req.query;
     const data = await models.users.findAll({
-      where: {
-        // full_name: "John Doe",
-        full_name: {
-          [Op.like]: `%${full_name}%`,
-        },
-      },
-      attributes: ["full_name"],
-      include: [
-        {
-          model: models.video,
-          as: "videos",
-          attributes: ["video_name", "user_id"],
-          required: true, // default là false - left join, true - inner join
-          include: [
-            {
-              model: models.video_comment,
-              as: "video_comments",
-            },
-          ],
-        },
-      ],
+      // where: {
+      // full_name: "John Doe",
+      // full_name: {
+      //   [Op.like]: `%${full_name}%`,
+      // },
+      // },
+      // attributes: ["full_name"],
+      // include: [
+      //   {
+      //     model: models.video,
+      //     as: "videos",
+      //     attributes: ["video_name", "user_id"],
+      //     required: true, // default là false - left join, true - inner join
+      //     include: [
+      //       {
+      //         model: models.video_comment,
+      //         as: "video_comments",
+      //       },
+      //     ],
+      //   },
+      // ],
     });
     return res.status(OK).json(data);
   } catch (error) {
